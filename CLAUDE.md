@@ -36,6 +36,14 @@ negócio), feita em setembro/2026.
   (confirmado via `<link rel="canonical">` no `index.html`); o domínio raiz
   redireciona (308) para o `www`.
 - **WhatsApp Business**: já é próprio da empresa, não precisou migrar.
+- **Formspree**: recriado do zero na conta da Dra. Alessandra
+  (`formspree.io/f/mqpkvygg`), substituindo o antigo (`.../f/mlgpyqry`, do
+  Igor). Constantes `FORMSPREE_ID` (`index.html`) e `FORMSPREE` (`teste.html`)
+  já atualizadas.
+- **Google Sheets / Apps Script**: recriado do zero na conta da Dra.
+  Alessandra (novo deployment terminado em `.../exec`), substituindo o antigo
+  do Igor. Constantes `SHEETS_WEBHOOK` (`index.html`) e `SHEETS`
+  (`teste.html`) já atualizadas.
 
 **Decisão deliberada — NÃO migrar:**
 
@@ -45,20 +53,15 @@ negócio), feita em setembro/2026.
   necessário. Não tente sugerir/iniciar uma transferência de titularidade
   sem confirmar com ela primeiro — foi decisão consciente, não pendência.
 
-**Ainda pendente (prioridade alta — envolve dados de pacientes):**
+**Ainda pendente:**
 
-- **Formspree** (`formspree.io/f/mlgpyqry`) e o **Google Apps Script /
-  planilha** (`script.google.com/macros/s/AKfycby.../exec`) que recebem os
-  leads do quiz STOP-BANG (nome, telefone, e-mail, respostas de saúde) ainda
-  estão em contas pessoais do Igor. Plano acordado: **recriar do zero** (novo
-  formulário Formspree + nova planilha/Apps Script na conta da Dra.
-  Alessandra) em vez de tentar transferir — mais simples e confiável. Depois
-  de migrado, atualizar as constantes `FORMSPREE_ID`/`SHEETS_WEBHOOK`
-  (`index.html`) e `FORMSPREE`/`SHEETS` (`teste.html`).
 - **Acesso do Igor**: decisão tomada — desligar o acesso dele a tudo (GitHub,
-  Vercel, Formspree, Apps Script), **exceto o domínio** (ver acima). Fazer
-  isso só depois de confirmar que os novos Formspree/planilha estão
-  funcionando em produção — não revogar acesso antes de validar.
+  Vercel, Formspree antigo, Apps Script antigo), **exceto o domínio** (ver
+  acima). Fazer isso só depois de confirmar em produção, por alguns dias,
+  que os novos Formspree/planilha estão recebendo os leads corretamente —
+  não revogar acesso antes de validar.
+- Exportar/copiar o histórico de leads da planilha antiga do Igor para a
+  nova, se ainda não foi feito, antes de revogar o acesso dele a ela.
 
 ## Arquitetura
 
@@ -128,26 +131,32 @@ nesse fluxo deve escapar o valor (ex: `textContent` em vez de `innerHTML`
 para partes com dado do usuário, ou uma função de escape de HTML) antes de
 interpolar em template strings destinadas a `innerHTML`.
 
-### 4. Guard morto bloqueia o envio de leads em `index.html` (bug confirmado)
+### 4. Guard morto bloqueava o envio de leads em `index.html` (corrigido em set/2026)
 
-Em `index.html`, tanto o envio ao Formspree quanto ao Google Sheets estão
-dentro de um `if` que compara a constante ao **próprio valor literal**:
+Até a migração do Formspree/Sheets, `index.html` tinha o envio ao Formspree e
+ao Google Sheets dentro de um `if` que comparava a constante ao **próprio
+valor literal** — condição sempre falsa, então o `fetch` nunca rodava:
 
 ```js
 const FORMSPREE_ID = 'https://formspree.io/f/mlgpyqry';
-if (FORMSPREE_ID !== 'https://formspree.io/f/mlgpyqry') { /* fetch nunca roda */ }
+if (FORMSPREE_ID !== 'https://formspree.io/f/mlgpyqry') { /* nunca executava */ }
 ```
 
-O mesmo padrão existe para `SHEETS_WEBHOOK`. Essa condição é **sempre falsa**
-— na prática, o quiz STOP-BANG embutido na página principal (`index.html`,
-diferente de `teste.html`) muito provavelmente **nunca enviou um lead
-sequer** para Formspree ou para a planilha, silenciosamente, desde que o ID
-real foi preenchido ali (o usuário só percebe o redirecionamento pro
-WhatsApp, que funciona independente, mascarando a falha). `teste.html` não
-tem esse guard e funciona normalmente. Corrigir removendo o `if` (ou
-comparando contra um placeholder genérico de verdade) da próxima vez que
-essas constantes forem atualizadas — está previsto para acontecer junto da
-migração do Formspree/Sheets para a conta da Dra. Alessandra.
+Na prática, o quiz STOP-BANG embutido na página principal (diferente de
+`teste.html`, que não tinha esse guard) muito provavelmente **nunca enviou
+um lead sequer** para Formspree ou para a planilha, silenciosamente — o
+usuário só percebia o redirecionamento pro WhatsApp, que funciona
+independente e mascarava a falha. Havia ainda um segundo bug junto: o
+`fetch` do Formspree remontava a URL como
+`` `https://formspree.io/f/${FORMSPREE_ID}` ``, mas `FORMSPREE_ID` já era a
+URL completa — o resultado ficaria duplicado
+(`.../f/https://formspree.io/f/...`) e nunca teria funcionado mesmo sem o
+guard.
+
+**Ambos corrigidos** na troca para os novos endpoints (Formspree e Sheets da
+Dra. Alessandra): o `if` foi removido e o `fetch` do Formspree agora usa a
+constante diretamente como URL. Se `index.html` for tocado novamente nessa
+área, confirme que nenhum guard equivalente foi reintroduzido.
 
 ## Pendências conhecidas
 

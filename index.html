@@ -1344,48 +1344,44 @@ async function submitForm() {
   const detailsTxt = keys.map((k,i) => `${labels[i]}: ${answers[k] === 1 ? 'SIM' : 'NÃO'}`).join('\n');
 
   // ── 1. Enviar para Formspree (email) ──
-  const FORMSPREE_ID = 'https://formspree.io/f/mlgpyqry'; // ← substituir após cadastro
-  if (FORMSPREE_ID !== 'https://formspree.io/f/mlgpyqry') {
-    try {
-      await fetch(`https://formspree.io/f/${FORMSPREE_ID}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify({
-          _subject: `🧪 Novo Lead STOP-BANG — ${name} — Risco ${riskLabel}`,
-          nome: name,
-          email: email,
-          telefone: phone,
-          respondente: respondentType === 'other' ? `Terceiro — Paciente: ${patientName}` : 'Própria pessoa',
-          como_conheceu: source || 'Não informado',
-          pontuacao: `${score}/8 — Risco ${riskLabel}`,
-          respostas: detailsTxt,
-        })
-      });
-    } catch(e) { console.log('Formspree erro:', e); }
-  }
+  const FORMSPREE_ID = 'https://formspree.io/f/mqpkvygg';
+  try {
+    await fetch(FORMSPREE_ID, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({
+        _subject: `🧪 Novo Lead STOP-BANG — ${name} — Risco ${riskLabel}`,
+        nome: name,
+        email: email,
+        telefone: phone,
+        respondente: respondentType === 'other' ? `Terceiro — Paciente: ${patientName}` : 'Própria pessoa',
+        como_conheceu: source || 'Não informado',
+        pontuacao: `${score}/8 — Risco ${riskLabel}`,
+        respostas: detailsTxt,
+      })
+    });
+  } catch(e) { console.log('Formspree erro:', e); }
 
   // ── 2. Enviar para Google Sheets ──
-  const SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycby-BXjf0ZqLXKmyNwPOt1LYqHJYFrk7gJgzgYOX4RlUH-eye6KWCqz9WME5ibZrbvEK/exec'; // ← substituir após configurar
-  if (SHEETS_WEBHOOK !== 'https://script.google.com/macros/s/AKfycby-BXjf0ZqLXKmyNwPOt1LYqHJYFrk7gJgzgYOX4RlUH-eye6KWCqz9WME5ibZrbvEK/exec') {
-    try {
-      await fetch(SHEETS_WEBHOOK, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          data: new Date().toLocaleString('pt-BR'),
-          nome: name,
-          email: email,
-          telefone: phone,
-          respondente: respondentType === 'other' ? `Terceiro: ${patientName}` : 'Própria pessoa',
-          como_conheceu: source || '',
-          pontuacao: score,
-          risco: riskLabel,
-          respostas: detailsTxt,
-        })
-      });
-    } catch(e) { console.log('Sheets erro:', e); }
-  }
+  const SHEETS_WEBHOOK = 'https://script.google.com/macros/s/AKfycbzvSXAY1fQiUYHbpZnidT2wRjjiYP-UtRpX9NX1V9q496bFm0r1EWtertAoMmv7XIE1/exec';
+  try {
+    await fetch(SHEETS_WEBHOOK, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        data: new Date().toLocaleString('pt-BR'),
+        nome: name,
+        email: email,
+        telefone: phone,
+        respondente: respondentType === 'other' ? `Terceiro: ${patientName}` : 'Própria pessoa',
+        como_conheceu: source || '',
+        pontuacao: score,
+        risco: riskLabel,
+        respostas: detailsTxt,
+      })
+    });
+  } catch(e) { console.log('Sheets erro:', e); }
 
   // ── 3. Abrir WhatsApp ──
   let msg = `🧪 *Teste STOP-BANG — Guaracare*%0A%0A`;
