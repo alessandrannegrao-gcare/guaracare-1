@@ -74,6 +74,8 @@ arquivos de página:
   de `index.html`, extraído para funil de captação isolado)
 - `vercel.json` — headers de segurança (X-Frame-Options, nosniff, etc.) e
   cache longo para assets estáticos; `cleanUrls: true`
+- `sitemap.xml` e `robots.txt` — servidos como arquivos estáticos na raiz
+  (sem rewrite necessário; mesmo esquema do `logo.png`)
 
 Integrações de captação de lead (Formspree para e-mail, Google Apps Script
 para Google Sheets) são chamadas via `fetch` direto do client, sem backend
@@ -160,8 +162,6 @@ constante diretamente como URL. Se `index.html` for tocado novamente nessa
 
 ## Pendências conhecidas
 
-- **Sem `sitemap.xml` nem `robots.txt`** no repositório — impacto de SEO/
-  indexação a avaliar.
 - O repositório de trabalho deve continuar fora de pastas sincronizadas por
   Google Drive/Dropbox/OneDrive (o cliente de sync injeta `desktop.ini` em
   toda subpasta do `.git`, corrompendo refs). Local atual de trabalho:
