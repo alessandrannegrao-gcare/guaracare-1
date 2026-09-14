@@ -76,6 +76,18 @@ arquivos de página:
   cache longo para assets estáticos; `cleanUrls: true`
 - `sitemap.xml` e `robots.txt` — servidos como arquivos estáticos na raiz
   (sem rewrite necessário; mesmo esquema do `logo.png`)
+- `polissonografia-domiciliar-guarapuava.html` — primeira página de conteúdo
+  de cauda longa (SEO), fora da landing page principal. Reaproveita as
+  mesmas variáveis de cor/fonte de `index.html` (mesmos nomes de CSS custom
+  properties), mas **referencia `/logo.png` e `/logo-reverso.png` por URL**
+  em vez de embutir base64 — `index.html` embute o logo em base64 direto no
+  header/footer, o que infla bastante o HTML (ver pendência de performance
+  abaixo). Ao criar novas páginas de conteúdo, seguir o padrão desta página
+  (header/footer leves por referência a arquivo), não o de `index.html`.
+  Padrão de nomenclatura de arquivo: slug com hífens, sem prefixo de pasta —
+  o `cleanUrls: true` do Vercel serve tanto `/arquivo.html` quanto
+  `/arquivo`. Toda página nova precisa ser adicionada ao `sitemap.xml` e
+  linkada a partir de `index.html` (internal link) para ser descoberta.
 
 Integrações de captação de lead (Formspree para e-mail, Google Apps Script
 para Google Sheets) são chamadas via `fetch` direto do client, sem backend
@@ -166,3 +178,19 @@ constante diretamente como URL. Se `index.html` for tocado novamente nessa
   Google Drive/Dropbox/OneDrive (o cliente de sync injeta `desktop.ini` em
   toda subpasta do `.git`, corrompendo refs). Local atual de trabalho:
   `C:\Users\<usuário>\projetos\guaracare-site`.
+- **E-mail do rodapé quebrado em produção** (`index.html`): o link de
+  e-mail usa marcação de ofuscação do Cloudflare (`/cdn-cgi/l/email-protection`
+  + `data-cfemail`), que só é decodificada por um script que o próprio
+  Cloudflare injeta quando o domínio passa pelo proxy dele. Como confirmado
+  em set/2026 (ver seção de migração), `guaracare.com.br` **não passa por
+  Cloudflare** — então esse script nunca roda, e o visitante vê literalmente
+  "[email&#160;protected]" no lugar do e-mail. Corrigir escrevendo o e-mail
+  direto no `href="mailto:..."` (sem ofuscação), já que não há proteção
+  funcionando mesmo.
+- **Logos embutidos em base64 inflam `index.html`**: o header e o footer
+  embutem o logo como base64 inline (uma linha de ~158KB no header, ~44KB
+  no footer), em vez de referenciar `/logo.png` e `/logo-reverso.png` (que
+  já existem como arquivos separados na raiz e são usados em outros lugares,
+  como og:image). Isso infla bastante o peso da página principal e pode
+  penalizar performance/Core Web Vitals, que é sinal de ranking do Google.
+  Trocar pelas referências de arquivo é uma correção simples e segura.
